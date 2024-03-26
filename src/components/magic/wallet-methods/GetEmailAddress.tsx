@@ -26,6 +26,7 @@ const GetEmailAddress = () => {
     }
   }, [magic]);
 
+  
   useEffect(() => {
     getEmailAddress(); // Call getEmailAddress function when component mounts
   }, []); // Empty dependency array ensures it only runs once when component mounts
