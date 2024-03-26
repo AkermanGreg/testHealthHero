@@ -108,6 +108,7 @@ const UserInfo = ({ token, setToken }: LoginProps) => {
         }
       />
       <div className="code">{balance} SOL</div>
+      <div className="wallet-method-desc">For test- Airdrop some SOL using airdrop below to fund account</div>
     </Card>
   );
 };

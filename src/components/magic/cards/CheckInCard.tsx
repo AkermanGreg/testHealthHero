@@ -1,86 +1,90 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Connection, PublicKey, TransactionInstruction, Transaction } from '@solana/web3.js';
-import { useMagic } from '../MagicProvider';
-import showToast from '@/utils/showToast';
-import Spinner from '@/components/ui/Spinner';
+import React, { useState } from 'react';
 import Card from '@/components/ui/Card';
+import showToast from '@/utils/showToast';
 import CardHeader from '@/components/ui/CardHeader';
 import Divider from '@/components/ui/Divider';
 import Spacer from '@/components/ui/Spacer';
+import Spinner from '@/components/ui/Spinner';
+import {
+  clusterApiUrl,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  Connection
+} from "@solana/web3.js";
+
+import { useMagic } from '../MagicProvider';
 
 const CheckInCard: React.FC = () => {
   const { magic, connection } = useMagic();
-  const [lastCheckIn, setLastCheckIn] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleCheckIn = useCallback(async () => {
+  const handleCheckIn = async () => {
     try {
       setLoading(true);
-      if (!magic || !connection) return;
-
-      const timestamp: number = Math.floor(Date.now() / 1000);
-      const metadata: any = await magic.user.getMetadata();
-      const userPublicKey: PublicKey = new PublicKey(metadata.publicAddress); // Ensure metadata.publicAddress is a valid public key
-
-      const recentBlockhash = await connection.getRecentBlockhash();
-
-      const programId: string = 'G64aSk2TLjzCNXdhLN8ANECas1uZW8azGsQ6uqGf96cy'; // Program ID as string
-
-      const checkInInstruction = new TransactionInstruction({
-        keys: [{ pubkey: userPublicKey, isSigner: false, isWritable: true }],
-        programId: new PublicKey(programId), // Convert string to PublicKey
-        data: Buffer.from(Uint8Array.of(1, timestamp)),
+  
+      
+  
+      // Fetch metadata and user public key from Magic
+      const metadata = await magic.user.getMetadata();
+      const userPublicKey = new PublicKey(metadata.publicAddress);
+  
+      // Generate recipient public key
+      const recipientPubkey = Keypair.generate().publicKey;
+  
+      // Fetch latest blockhash
+      const blockhash = await connection?.getLatestBlockhash();
+      if (!blockhash) return;
+  
+      // Create a new transaction
+      const transaction = new Transaction({
+        ...blockhash,
+        feePayer: userPublicKey,
       });
-
-      const transaction = new Transaction().add(checkInInstruction);
-
-      const signedTransaction = await magic.solana.signTransaction(transaction);
-      signedTransaction.recentBlockhash = recentBlockhash.blockhash;
-
-      const signature = await connection.sendRawTransaction(
-        signedTransaction.serialize(),
-        { skipPreflight: true }
+  
+      // Add transfer instruction to the transaction
+      const transferIx = SystemProgram.transfer({
+        fromPubkey: userPublicKey,
+        toPubkey: recipientPubkey,
+        lamports: 0.01 * LAMPORTS_PER_SOL,
+      });
+      transaction.add(transferIx);
+  
+      // Sign the transaction using Magic
+      const signedTransaction = await magic?.solana.signTransaction(
+        transaction,
+        {
+          requireAllSignatures: false,
+          verifySignatures: true,
+        }
       );
-
-      await connection.confirmTransaction(signature, 'processed');
-      await fetchLastCheckIn();
-
-      showToast({ message: 'Checked in successfully!', type: 'success' });
+  
+      // Send the signed transaction to Solana network
+      const signature = await connection?.sendRawTransaction(
+        Buffer.from(signedTransaction?.rawTransaction as string, "base64")
+      );
+  
+      console.log(signature); // Print transaction signature
+  
+      // Sign the message using Magic
+      const signedMessage = await magic?.solana.signMessage("Hello World");
+      console.log(signedMessage);
+      showToast({ message: `Signature: ${signature}`, type: 'success' });
+      showToast({ message: `Signed message: ${signedMessage}`, type: 'success' });
     } catch (error) {
-      console.error('Error checking in:', error);
-      showToast({ message: 'Error checking in', type: 'error' });
+      console.error('Error submitting transaction:', error);
+      showToast({ message: 'Error submitting transaction', type: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [magic, connection]);
-
-  const fetchLastCheckIn = useCallback(async () => {
-    try {
-      if (!connection) return;
-      
-      const accountInfo = await connection.getAccountInfo(
-        new PublicKey('G64aSk2TLjzCNXdhLN8ANECas1uZW8azGsQ6uqGf96cy')
-      );
-
-      if (accountInfo) {
-        const lastCheckInTimestamp: DataView = new DataView(accountInfo.data.buffer);
-        setLastCheckIn(lastCheckInTimestamp.getInt64(0, true));
-      }
-    } catch (error) {
-      console.error('Error fetching last check-in:', error);
-      showToast({ message: 'Error fetching last check-in', type: 'error' });
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    fetchLastCheckIn();
-  }, [fetchLastCheckIn]);
-
+  };
+  
   return (
     <Card>
       <CardHeader id="check-in">Check-In</CardHeader>
       <Divider />
-      <div>Last Check-In: {lastCheckIn !== null ? new Date(lastCheckIn).toLocaleString() : 'Not available'}</div>
       <Spacer size={20} />
       <button onClick={handleCheckIn} disabled={loading}>
         {loading ? (
@@ -91,6 +95,7 @@ const CheckInCard: React.FC = () => {
           'Check In'
         )}
       </button>
+      <div className="wallet-method-desc">This will generate a signature and signed message</div>
     </Card>
   );
 };
