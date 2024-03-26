@@ -24,11 +24,11 @@ const CheckInCard: React.FC = () => {
 
       const recentBlockhash = await connection.getRecentBlockhash();
 
-      const programId: PublicKey = new PublicKey('G64aSk2TLjzCNXdhLN8ANECas1uZW8azGsQ6uqGf96cy');
+      const programId: string = 'G64aSk2TLjzCNXdhLN8ANECas1uZW8azGsQ6uqGf96cy'; // Program ID as string
 
       const checkInInstruction = new TransactionInstruction({
         keys: [{ pubkey: userPublicKey, isSigner: false, isWritable: true }],
-        programId: programId,
+        programId: new PublicKey(programId), // Convert string to PublicKey
         data: Buffer.from(Uint8Array.of(1, timestamp)),
       });
 
