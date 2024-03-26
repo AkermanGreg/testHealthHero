@@ -7,12 +7,12 @@ const Header = () => {
     <div className="app-header-container">
       <div className="flex flex-col gap-2.5 items-center">
         <Image src={Logo} alt="logo" />
-        <div className="text-center text-white text-xl font-extrabold font-['Inter'] leading-[30px]">Magic</div>
+        <div className="text-center text-white text-xl font-extrabold font-['Inter'] leading-[30px]">Gregory Akerman</div>
         <div className="text-center text-white text-opacity-50 text-base font-normal font-['SF Mono'] leading-normal">
-          Demo
+          Test for Health Hero
         </div>
       </div>
-      <DevLinks />
+  
     </div>
   );
 };
