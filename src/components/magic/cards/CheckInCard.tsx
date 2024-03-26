@@ -10,17 +10,17 @@ import Spacer from '@/components/ui/Spacer';
 
 const CheckInCard: React.FC = () => {
   const { magic, connection } = useMagic();
-  const [lastCheckIn, setLastCheckIn] = useState<PublicKey | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [lastCheckIn, setLastCheckIn] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleCheckIn = useCallback(async () => {
     try {
       setLoading(true);
       if (!magic || !connection) return;
 
-      const timestamp = Math.floor(Date.now() / 1000);
-      const metadata = await magic.user.getMetadata();
-      const userPublicKey = new PublicKey(metadata.publicAddress);
+      const timestamp: number = Math.floor(Date.now() / 1000);
+      const metadata: any = await magic.user.getMetadata();
+      const userPublicKey: PublicKey = new PublicKey(metadata.publicAddress);
 
       const recentBlockhash = await connection.getRecentBlockhash();
 
@@ -61,8 +61,8 @@ const CheckInCard: React.FC = () => {
       );
 
       if (accountInfo) {
-        const lastCheckInTimestamp = new DataView(accountInfo.data.buffer).getInt64(0, true);
-        setLastCheckIn(new PublicKey(lastCheckInTimestamp));
+        const lastCheckInTimestamp: DataView = new DataView(accountInfo.data.buffer);
+        setLastCheckIn(lastCheckInTimestamp.getInt64(0, true));
       }
     } catch (error) {
       console.error('Error fetching last check-in:', error);
@@ -78,7 +78,7 @@ const CheckInCard: React.FC = () => {
     <Card>
       <CardHeader id="check-in">Check-In</CardHeader>
       <Divider />
-      <div>Last Check-In: {lastCheckIn ? lastCheckIn.toString() : 'Not available'}</div>
+      <div>Last Check-In: {lastCheckIn !== null ? new Date(lastCheckIn).toLocaleString() : 'Not available'}</div>
       <Spacer size={20} />
       <button onClick={handleCheckIn} disabled={loading}>
         {loading ? (
