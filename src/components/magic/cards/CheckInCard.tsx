@@ -20,13 +20,15 @@ const CheckInCard: React.FC = () => {
 
       const timestamp: number = Math.floor(Date.now() / 1000);
       const metadata: any = await magic.user.getMetadata();
-      const userPublicKey: PublicKey = new PublicKey(metadata.publicAddress);
+      const userPublicKey: PublicKey = new PublicKey(metadata.publicAddress); // Ensure metadata.publicAddress is a valid public key
 
       const recentBlockhash = await connection.getRecentBlockhash();
 
+      const programId: PublicKey = new PublicKey('G64aSk2TLjzCNXdhLN8ANECas1uZW8azGsQ6uqGf96cy');
+
       const checkInInstruction = new TransactionInstruction({
         keys: [{ pubkey: userPublicKey, isSigner: false, isWritable: true }],
-        programId: 'G64aSk2TLjzCNXdhLN8ANECas1uZW8azGsQ6uqGf96cy',
+        programId: programId,
         data: Buffer.from(Uint8Array.of(1, timestamp)),
       });
 
